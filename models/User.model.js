@@ -23,7 +23,9 @@ const userSchema = new Schema(
       enum:['Pending', 'Active'],
       default:'Pending'
     },
-    profilePic:{type:String}
+    profilePic:{type:String},
+    myBookmarks : [{type: Schema.Types.ObjectId, ref:"BookMark"}]
+
   },
   {
     timestamps: true,
