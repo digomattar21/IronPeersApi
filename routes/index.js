@@ -85,6 +85,42 @@ router.post('/user/getuserbookmarks', async (req, res) => {
         console.log(error.message)
         res.status(500).json({ message: error.message });
     }
+});
+
+router.post('/channel/pinmessage', async (req, res) => {
+  const {channelId, message, messageOwner, messageFirebaseId}= req.body;
+  try {
+
+    let channel = await Channel.updateOne(
+      {firebaseId: channelId},
+      {$push: {pinnedMessages:[messageFirebaseId]}}
+      );
+      
+      let channelUpdated = await Channel.findOne({firebaseId: channelId})
+
+    res.status(201).json({channel: channel})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({message: error.message})
+  }
+});
+
+
+router.get('/channels/getpinnedmessages/:channelId', async (req, res) => {
+  const {channelId} = req.params;
+  try {
+    console.log(' EH TETRAAA')
+    console.log(channelId)
+    
+    let channel = await Channel.findOne({firebaseId: channelId});
+    let pinnedMessages = channel.pinnedMessages;
+    res.status(200).json({messageFirebaseIds: pinnedMessages})
+
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({message: error.message});
+  }
 })
 
 module.exports = router;
