@@ -125,12 +125,26 @@ authRouter.post('/auth/login', async (req, res) => {
 authRouter.post('/auth/signupwithgoogle', async (req, res) => {
     const {username, email, profilePic} = req.body;
     try {
-        let newUser = await User.create({username: username, email: email, profilePic: profilePic, status:'Active'});
-        const payload = {
+        let payload;
+        let user = await User.find({username:username})
+        if (!user){
+          let newUser = await User.create({username: username, email: email, profilePic: profilePic, status:'Active'});
+          payload = {
             username: newUser.username,
             email: newUser.email,
             id: newUser.id
           }
+
+        }else{
+           payload = {
+            username: user.username,
+            email: user.email,
+            id: user.id
+          }
+
+        }
+        
+        
 
         const token = jwt.sign(payload, process.env.JWT_PASS, {expiresIn: '1 day'});
         res.status(200).json({payload,token})
