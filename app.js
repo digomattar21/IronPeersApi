@@ -21,7 +21,7 @@ const auth = require('./routes/auth.routes');
 
 
 //Rotas
-app.use('/', index);
+
 app.use('/', auth)
 //Rotas publicas
 
@@ -30,7 +30,7 @@ app.use('/', auth)
 app.use(require('./middlewares/authmiddleware'));
 
 //Rotas privadas
-
+app.use('/', index);
 
 app.listen(PORT, () => {
   console.log(`Server listening on the port: ${PORT}`);

@@ -65,7 +65,8 @@ authRouter.post('/auth/confirm', async (req, res) => {
 
     const token = req.headers.authorization.split(' ')[1];
 
-    let userDeHashed = jwt.verify(token,process.env.JWT_PASS)
+    let userDeHashed = jwt.verify(token,process.env.JWT_PASS);
+
 
     let user = await User.findOne({ email: userDeHashed.email })
 
@@ -87,13 +88,14 @@ authRouter.post('/auth/confirm', async (req, res) => {
 });
 
 authRouter.post('/auth/login', async (req, res) => {
-  const {username,password} = req.body;
+  const {email,password} = req.body;
   try {
-    if (!username || !password) {
+    console.log(email, password)
+    if (!email || !password) {
       throw new Error('Por favor insira seu usuário e senha')
     }
 
-    let user = await User.findOne({username: username});
+    let user = await User.findOne({email: email});
 
     if (user!=null){
       let validate = bcrypt.compareSync(password,user.password);
