@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
   console.log(tokenWithoutBearer)
   try {
     const decodedToken = jwt.verify(tokenWithoutBearer, process.env.JWT_PASS);
-    req.user = { id: decodedToken.id, username: decodedToken.username };
+    req.user = { id: decodedToken.id, username: decodedToken.username, email: decodedToken.email };
     return next();
   } catch (error) {
     console.log(error.message);

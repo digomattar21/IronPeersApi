@@ -110,16 +110,28 @@ router.post('/channel/pinmessage', async (req, res) => {
 router.get('/channels/getpinnedmessages/:channelId', async (req, res) => {
   const {channelId} = req.params;
   try {
-    console.log(' EH TETRAAA')
-    console.log(channelId)
-    
     let channel = await Channel.findOne({firebaseId: channelId});
     let pinnedMessages = channel.pinnedMessages;
+    console.log(pinnedMessages)
     res.status(200).json({messageFirebaseIds: pinnedMessages})
 
   } catch (error) {
     console.log(error.message)
     res.status(500).json({message: error.message});
+  }
+});
+
+router.get('/user/getinfo', async (req, res)=>{
+  const reqUser = req.user;
+  console.log(reqUser)
+  try{
+    let email = reqUser.email;
+    let user = await User.findOne({ email: email})
+    console.log(user)
+    res.status(200).json({userAuth:user})
+  }catch(err){
+    console.log(err.message)
+    res.status(500).json({message:err.message})
   }
 })
 
