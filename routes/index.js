@@ -142,8 +142,10 @@ router.get("/channels/getchannelmemberslength/:channelId", async (req, res) => {
   const { channelId } = req.params;
 
   try {
+    
     let channel = await Channel.findOne({ firebaseId: channelId });
-    let membersLength = channel.members;
+    let membersArray = channel.members;
+    let membersLength = membersArray.length;
 
     res.status(200).json({ membersLength: membersLength });
   } catch (error) {
@@ -169,6 +171,10 @@ router.post("/user/joinchannel", async (req, res) => {
         { email: userEmail },
         { $push: { joinedChannels: [channelMongoId] } }
       );
+      let channelUpdated = await Channel.updateOne(
+        {firebaseId: channelId},
+        {$push:{members:[userBefore.id]}}
+      )
   
     }
 
@@ -193,5 +199,31 @@ router.post('/user/getuserchannels', async (req, res) => {
   }
 
 });
+
+
+router.post('/user/setfavoritechannel', async (req, res)=>{
+  const {userEmail, channelId} = req.body;
+  try {
+    let message='OK';
+    let user = await User.findOne({email: userEmail});
+    let channel = await Channel.findOne({ firebaseId: channelId });
+    let channelMongoId = channel.id;
+
+    if (user.favoriteChannels.includes(channelMongoId)){
+      message='Ja esta nos favoritos'
+    }else{
+      let userUpdated = await User.updateOne(
+        {email: userEmail},
+        {$push: {favoriteChannels:[channelMongoId]}}
+      );
+    };
+
+    res.status(200).json({message: message});
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({message: error.message})
+  }
+})
 
 module.exports = router;
