@@ -37,102 +37,161 @@ router.post("/channels/bookmarkmessage", async (req, res) => {
   }
 });
 
-
-router.get('/channels/getbookmarkedmessages/:channelId', async (req, res) => {
-    const {channelId} = req.params;
-    try {
-        
-        let channel = await Channel.findOne({firebaseId: channelId});
-        let bookmarks = channel.bookMarkedMessages;        
-
-        res.status(200).json({ bookmarked: bookmarks})
-
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ message: error.message });
-    }
-});
-
-
-router.post('/user/adduserbookmark', async (req, res) => {
-    const {email, channelId, messageFirebaseId, message, messageOwner, channelName }= req.body;
-    try {
-        let channel = await Channel.findOne({firebaseId: channelId});
-        console.log(channel.id)
-        let newBookmark = await Bookmark.create({channelMongoId: channel.id, messageFirebaseId: messageFirebaseId, message: message, messageOwner: messageOwner, channelName: channelName});
-        let updateUserBookmark = await User.updateOne(
-            {email: email}, 
-            {$push: {myBookmarks: [newBookmark]}}
-        )
-
-        res.status(201).json({bookmark: newBookmark})
-
-        
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).json({ message: error.message });
-    }
-});
-
-router.post('/user/getuserbookmarks', async (req, res) => {
-    const {email} = req.body;
-    try {
-        let user = await User.findOne({email: email}).populate('myBookmarks');
-        const allBookmarks = user.myBookmarks;
-        console.log(allBookmarks)
-        res.status(200).json({bookmarks: allBookmarks})
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).json({ message: error.message });
-    }
-});
-
-router.post('/channel/pinmessage', async (req, res) => {
-  const {channelId, message, messageOwner, messageFirebaseId}= req.body;
+router.get("/channels/getbookmarkedmessages/:channelId", async (req, res) => {
+  const { channelId } = req.params;
   try {
+    let channel = await Channel.findOne({ firebaseId: channelId });
+    let bookmarks = channel.bookMarkedMessages;
 
+    res.status(200).json({ bookmarked: bookmarks });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/user/adduserbookmark", async (req, res) => {
+  const {
+    email,
+    channelId,
+    messageFirebaseId,
+    message,
+    messageOwner,
+    channelName,
+  } = req.body;
+  try {
+    let channel = await Channel.findOne({ firebaseId: channelId });
+    console.log(channel.id);
+    let newBookmark = await Bookmark.create({
+      channelMongoId: channel.id,
+      messageFirebaseId: messageFirebaseId,
+      message: message,
+      messageOwner: messageOwner,
+      channelName: channelName,
+    });
+    let updateUserBookmark = await User.updateOne(
+      { email: email },
+      { $push: { myBookmarks: [newBookmark] } }
+    );
+
+    res.status(201).json({ bookmark: newBookmark });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/user/getuserbookmarks", async (req, res) => {
+  const { email } = req.body;
+  try {
+    let user = await User.findOne({ email: email }).populate("myBookmarks");
+    const allBookmarks = user.myBookmarks;
+    console.log(allBookmarks);
+    res.status(200).json({ bookmarks: allBookmarks });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/channel/pinmessage", async (req, res) => {
+  const { channelId, message, messageOwner, messageFirebaseId } = req.body;
+  try {
     let channel = await Channel.updateOne(
-      {firebaseId: channelId},
-      {$push: {pinnedMessages:[messageFirebaseId]}}
-      );
-      
-      let channelUpdated = await Channel.findOne({firebaseId: channelId})
+      { firebaseId: channelId },
+      { $push: { pinnedMessages: [messageFirebaseId] } }
+    );
 
-    res.status(201).json({channel: channel})
+    let channelUpdated = await Channel.findOne({ firebaseId: channelId });
+
+    res.status(201).json({ channel: channel });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/channels/getpinnedmessages/:channelId", async (req, res) => {
+  const { channelId } = req.params;
+  try {
+    let channel = await Channel.findOne({ firebaseId: channelId });
+    let pinnedMessages = channel.pinnedMessages;
+    console.log(pinnedMessages);
+    res.status(200).json({ messageFirebaseIds: pinnedMessages });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/user/getinfo", async (req, res) => {
+  const reqUser = req.user;
+  console.log(reqUser);
+  try {
+    let email = reqUser.email;
+    let user = await User.findOne({ email: email });
+    console.log(user);
+    res.status(200).json({ userAuth: user });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get("/channels/getchannelmemberslength/:channelId", async (req, res) => {
+  const { channelId } = req.params;
+
+  try {
+    let channel = await Channel.findOne({ firebaseId: channelId });
+    let membersLength = channel.members;
+
+    res.status(200).json({ membersLength: membersLength });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/user/joinchannel", async (req, res) => {
+  const { userEmail, channelId } = req.body;
+
+  try {
+    let message;
+    let channel = await Channel.findOne({ firebaseId: channelId });
+    let channelMongoId = channel.id;
+
+    let userBefore = await User.findOne({ email: userEmail});
+
+    if (userBefore.joinedChannels.includes(channelMongoId)) {
+          message="already joined that channel"
+    }else{
+      let userUpdated = await User.updateOne(
+        { email: userEmail },
+        { $push: { joinedChannels: [channelMongoId] } }
+      );
+  
+    }
+
+    res.status(201).json({ updated: message });
 
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
 });
 
 
-router.get('/channels/getpinnedmessages/:channelId', async (req, res) => {
-  const {channelId} = req.params;
+router.post('/user/getuserchannels', async (req, res) => {
+  const {userEmail} = req.body;
   try {
-    let channel = await Channel.findOne({firebaseId: channelId});
-    let pinnedMessages = channel.pinnedMessages;
-    console.log(pinnedMessages)
-    res.status(200).json({messageFirebaseIds: pinnedMessages})
+    let user = await User.findOne({email: userEmail}).populate('joinedChannels favoriteChannels');
+    res.status(200).json({favoriteChannels: user.favoriteChannels, joinedChannels: user.joinedChannels})
 
   } catch (error) {
-    console.log(error.message)
-    res.status(500).json({message: error.message});
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
   }
-});
 
-router.get('/user/getinfo', async (req, res)=>{
-  const reqUser = req.user;
-  console.log(reqUser)
-  try{
-    let email = reqUser.email;
-    let user = await User.findOne({ email: email})
-    console.log(user)
-    res.status(200).json({userAuth:user})
-  }catch(err){
-    console.log(err.message)
-    res.status(500).json({message:err.message})
-  }
-})
+});
 
 module.exports = router;
