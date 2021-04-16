@@ -10,6 +10,7 @@ const channelSchema = new Schema(
     firebaseId: { type: String},
     bookMarkedMessages:[{type:String}],
     pinnedMessages:[{type:String}],
+    members:[{type:Schema.Types.ObjectId, ref:'User'}],
     
   },
   {

@@ -24,7 +24,9 @@ const userSchema = new Schema(
       default:'Pending'
     },
     profilePic:{type:String},
-    myBookmarks : [{type: Schema.Types.ObjectId, ref:"BookMark"}]
+    myBookmarks : [{type: Schema.Types.ObjectId, ref:"BookMark"}],
+    joinedChannels: [{type: Schema.Types.ObjectId, ref:"Channel"}],
+    favoriteChannels: [{type: Schema.Types.ObjectId, ref:'Channel'}]
 
   },
   {

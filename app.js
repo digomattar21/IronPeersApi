@@ -27,7 +27,7 @@ app.use('/', auth)
 
 
 //Middleware validacao de token jwt
-app.use(require('./middlewares/authmiddleware'));
+// app.use(require('./middlewares/authmiddleware'));
 
 //Rotas privadas
 app.use('/', index);
