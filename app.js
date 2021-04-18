@@ -32,7 +32,13 @@ app.use('/', auth)
 //Rotas privadas
 app.use('/', index);
 
+app.use((req, res, next) => {
+  // If no routes match, send them the React HTML.
+  res.sendFile(__dirname + "/public/index.html");
+});
+
 app.listen(PORT, () => {
   console.log(`Server listening on the port: ${PORT}`);
 });
+
 module.exports = app;
