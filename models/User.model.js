@@ -27,7 +27,9 @@ const userSchema = new Schema(
     myBookmarks : [{type: Schema.Types.ObjectId, ref:"BookMark"}],
     joinedChannels: [{type: Schema.Types.ObjectId, ref:"Channel"}],
     favoriteChannels: [{type: Schema.Types.ObjectId, ref:'Channel'}],
-    privateChannels: [{type: Schema.Types.ObjectId, ref:"PrivateChannel"}]
+    privateChannels: [{type: Schema.Types.ObjectId, ref:"PrivateChannel"}],
+    myPrivateBookmarks: [{type: Schema.Types.ObjectId,ref:"PrivateBookmark"}],
+    inbox: {type: Schema.Types.ObjectId, ref:'Inbox'}
 
   },
   {
