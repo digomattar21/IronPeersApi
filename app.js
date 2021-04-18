@@ -37,7 +37,7 @@ app.use((req, res, next) => {
   res.sendFile(__dirname + "/public/index.html");
 });
 
-app.listen(PORT, () => {
+app.listen(PORT||5000, () => {
   console.log(`Server listening on the port: ${PORT}`);
 });
 
