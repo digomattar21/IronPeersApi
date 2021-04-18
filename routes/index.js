@@ -14,8 +14,7 @@ const { resolveHostname } = require("nodemailer/lib/shared");
 router.post("/channels/createglobal", async (req, res) => {
   const { name, firebaseId, isPrivate, userEmail, description } = req.body;
   try {
-
-    let user = await User.findOne({ email: userEmail});
+    let user = await User.findOne({ email: userEmail });
     let userId = user.id;
 
     let newChannel = await Channel.create({
@@ -23,15 +22,15 @@ router.post("/channels/createglobal", async (req, res) => {
       firebaseId: firebaseId,
       description: description,
       isPrivate: isPrivate,
-      members: [userId]
+      members: [userId],
     });
 
     let channelMongoId = newChannel.id;
 
     let userUpdated = await User.updateOne(
-      {email: userEmail},
-      {$push:{ joinedChannels:[channelMongoId]}}
-      )
+      { email: userEmail },
+      { $push: { joinedChannels: [channelMongoId] } }
+    );
 
     res.status(201).json({ channel: newChannel });
   } catch (error) {
@@ -40,28 +39,26 @@ router.post("/channels/createglobal", async (req, res) => {
   }
 });
 
-
 router.post("/channels/createprivate", async (req, res) => {
   const { name, firebaseId, userEmail, description } = req.body;
   try {
-
-    let user = await User.findOne({ email: userEmail});
+    let user = await User.findOne({ email: userEmail });
     let userId = user.id;
 
     let newChannel = await PrivateChannel.create({
       name: name,
       firebaseId: firebaseId,
       description: description,
-      members:[userId],
-      invitedMembers: []
+      members: [userId],
+      invitedMembers: [],
     });
 
     let channelMongoId = newChannel.id;
 
     let userUpdated = await User.updateOne(
-      {email: userEmail},
-      {$push:{ privateChannels:[channelMongoId]}}
-      )
+      { email: userEmail },
+      { $push: { privateChannels: [channelMongoId] } }
+    );
 
     res.status(201).json({ channel: newChannel });
   } catch (error) {
@@ -130,7 +127,7 @@ router.post("/user/adduserbookmark", async (req, res) => {
       message: message,
       messageOwner: messageOwner,
       channelName: channelName,
-      isPrivate: false
+      isPrivate: false,
     });
     let updateUserBookmark = await User.updateOne(
       { email: email },
@@ -162,7 +159,7 @@ router.post("/user/adduserprivatebookmark", async (req, res) => {
       message: message,
       messageOwner: messageOwner,
       channelName: channelName,
-      isPrivate: true
+      isPrivate: true,
     });
     let updateUserBookmark = await User.updateOne(
       { email: email },
@@ -176,12 +173,12 @@ router.post("/user/adduserprivatebookmark", async (req, res) => {
   }
 });
 
-
-
 router.post("/user/getuserbookmarks", async (req, res) => {
   const { email } = req.body;
   try {
-    let user = await User.findOne({ email: email }).populate("myBookmarks myPrivateBookmarks");
+    let user = await User.findOne({ email: email }).populate(
+      "myBookmarks myPrivateBookmarks"
+    );
     const bookmarksR = user.myBookmarks;
     const privateBookmarks = user.myPrivateBookmarks;
     const allBookmarks = [...bookmarksR, ...privateBookmarks];
@@ -208,8 +205,6 @@ router.post("/channel/pinmessage", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
-
 
 router.post("/channel/private/pinmessage", async (req, res) => {
   const { channelId, message, messageOwner, messageFirebaseId } = req.body;
@@ -240,39 +235,26 @@ router.get("/channels/getpinnedmessages/:channelId", async (req, res) => {
   }
 });
 
-
-router.get("/channels/private/getpinnedmessages/:channelId", async (req, res) => {
-  const { channelId } = req.params;
-  try {
-    let channel = await PrivateChannel.findOne({ firebaseId: channelId });
-    let pinnedMessages = channel.pinnedMessages;
-    res.status(200).json({ messageFirebaseIds: pinnedMessages });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: error.message });
+router.get(
+  "/channels/private/getpinnedmessages/:channelId",
+  async (req, res) => {
+    const { channelId } = req.params;
+    try {
+      let channel = await PrivateChannel.findOne({ firebaseId: channelId });
+      let pinnedMessages = channel.pinnedMessages;
+      res.status(200).json({ messageFirebaseIds: pinnedMessages });
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ message: error.message });
+    }
   }
-});
+);
 
-
-
-router.get("/user/getinfo", async (req, res) => {
-  const reqUser = req.user;
-  try {
-    let email = reqUser.email;
-    let user = await User.findOne({ email: email });
-    console.log(user);
-    res.status(200).json({ userAuth: user });
-  } catch (err) {
-    console.log(err.message);
-    res.status(500).json({ message: err.message });
-  }
-});
 
 router.get("/channels/getchannelmemberslength/:channelId", async (req, res) => {
   const { channelId } = req.params;
 
   try {
-    
     let channel = await Channel.findOne({ firebaseId: channelId });
     let membersArray = channel.members;
     let membersLength = membersArray.length;
@@ -284,22 +266,23 @@ router.get("/channels/getchannelmemberslength/:channelId", async (req, res) => {
   }
 });
 
-router.get(`/channels/private/getchannelmemberslength/:channelId`, async (req, res) => {
-  const { channelId } = req.params;
+router.get(
+  `/channels/private/getchannelmemberslength/:channelId`,
+  async (req, res) => {
+    const { channelId } = req.params;
 
-  try {
-    
-    let channel = await PrivateChannel.findOne({ firebaseId: channelId });
-    let membersArray = channel.members;
-    let membersLength = membersArray.length;
+    try {
+      let channel = await PrivateChannel.findOne({ firebaseId: channelId });
+      let membersArray = channel.members;
+      let membersLength = membersArray.length;
 
-    res.status(200).json({ membersLength: membersLength });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: error.message });
+      res.status(200).json({ membersLength: membersLength });
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ message: error.message });
+    }
   }
-});
-
+);
 
 router.post("/user/joinchannel", async (req, res) => {
   const { userEmail, channelId } = req.body;
@@ -309,139 +292,201 @@ router.post("/user/joinchannel", async (req, res) => {
     let channel = await Channel.findOne({ firebaseId: channelId });
     let channelMongoId = channel.id;
 
-    let userBefore = await User.findOne({ email: userEmail});
+    let userBefore = await User.findOne({ email: userEmail });
 
     if (userBefore.joinedChannels.includes(channelMongoId)) {
-          message="already joined that channel"
-    }else{
+      message = "already joined that channel";
+    } else {
       let userUpdated = await User.updateOne(
         { email: userEmail },
         { $push: { joinedChannels: [channelMongoId] } }
       );
       let channelUpdated = await Channel.updateOne(
-        {firebaseId: channelId},
-        {$push:{members:[userBefore.id]}}
-      )
-  
+        { firebaseId: channelId },
+        { $push: { members: [userBefore.id] } }
+      );
     }
 
     res.status(201).json({ updated: message });
-
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
   }
 });
 
-
-router.post('/user/getuserchannels', async (req, res) => {
-  const {userEmail} = req.body;
+router.post("/user/getuserchannels", async (req, res) => {
+  const { userEmail } = req.body;
   try {
-    let user = await User.findOne({email: userEmail}).populate('joinedChannels favoriteChannels privateChannels');
-    res.status(200).json({favoriteChannels: user.favoriteChannels, joinedChannels: user.joinedChannels, privateChannels: user.privateChannels})
-
+    let user = await User.findOne({ email: userEmail }).populate(
+      "joinedChannels favoriteChannels privateChannels inbox"
+    );
+    res
+      .status(200)
+      .json({
+        favoriteChannels: user.favoriteChannels,
+        joinedChannels: user.joinedChannels,
+        privateChannels: user.privateChannels,
+        hasUnread: user.inbox.hasUnread
+      });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
   }
-
 });
 
-
-router.post('/user/setfavoritechannel', async (req, res)=>{
-  const {userEmail, channelId} = req.body;
+router.post("/user/setfavoritechannel", async (req, res) => {
+  const { userEmail, channelId } = req.body;
   try {
-    let message='OK';
-    let user = await User.findOne({email: userEmail});
+    let message = "OK";
+    let user = await User.findOne({ email: userEmail });
     let channel = await Channel.findOne({ firebaseId: channelId });
     let channelMongoId = channel.id;
 
-    if (user.favoriteChannels.includes(channelMongoId)){
-      message='Ja esta nos favoritos'
-    }else{
+    if (user.favoriteChannels.includes(channelMongoId)) {
+      message = "Ja esta nos favoritos";
+    } else {
       let userUpdated = await User.updateOne(
-        {email: userEmail},
-        {$push: {favoriteChannels:[channelMongoId]}}
+        { email: userEmail },
+        { $push: { favoriteChannels: [channelMongoId] } }
       );
-    };
+    }
 
-    res.status(200).json({message: message});
-
+    res.status(200).json({ message: message });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
 });
 
-
-router.post('/user/sendprivatechannelinvite', async (req, res) => {
-  const {userWhoInvited, channelId, userInvited} = req.body;
+router.post("/user/sendprivatechannelinvite", async (req, res) => {
+  const { userWhoInvited, channelId, userInvited } = req.body;
 
   try {
-      let userSending = await User.findOne({email: userWhoInvited});
-      let userReceiving = await User.findOne({email: userInvited}).populate('inbox');
-      let channel = await PrivateChannel.findOne({ firebaseId: channelId });
-      let invite;
-      let inboxId = userReceiving.inbox.id;
+    let userSending = await User.findOne({ email: userWhoInvited });
+    let userReceiving = await User.findOne({ email: userInvited }).populate(
+      "inbox"
+    );
+    let channel = await PrivateChannel.findOne({ firebaseId: channelId });
+    let invite;
+    let inboxId = userReceiving.inbox.id;
 
-      if (userSending && userReceiving && channel){
-        invite = await Invite.create({userWhoInvited: userSending.id, userInvited: userReceiving.id, channelMongoId: channel.id, channelFirebaseId: channelId, read:false})
-      }else{
-        throw Error('Usuario nao encontrado')
-      }
+    if (userSending && userReceiving && channel) {
+      invite = await Invite.create({
+        userWhoInvited: userSending.id,
+        userInvited: userReceiving.id,
+        channelMongoId: channel.id,
+        channelFirebaseId: channelId,
+        read: false,
+      });
+    } else {
+      throw Error("Usuario nao encontrado");
+    }
 
-      let userUpdated = await Inbox.findByIdAndUpdate(
-        inboxId,
-        {hasUnread: true, $push:{invites:[invite.id]}}
-        )
+    let userUpdated = await Inbox.findByIdAndUpdate(inboxId, {
+      hasUnread: true,
+      $push: { invites: [invite.id] },
+    });
 
-
-      res.status(200).json({ message:'Invite sucessfully sent'})
+    res.status(200).json({ message: "Invite sucessfully sent" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
-
 });
 
-router.post('/user/inbox/getinfo', async (req, res) => {
+router.post("/user/inbox/getinfo", async (req, res) => {
+  const { userEmail } = req.body;
+  try {
+    let user = await User.findOne({ email: userEmail });
+    let inboxId = user.inbox;
+    let inbox = await Inbox.findById(inboxId)
+      .sort([["createdAt", "descending"]])
+      .populate("invites");
+
+    res
+      .status(200)
+      .json({ invites: inbox.invites, hasUnread: inbox.hasUnread });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.post("/user/invites/getinfo", async (req, res) => {
+  const { userWhoInvited, channelFirebaseId } = req.body;
+
+  try {
+    let user = await User.findById(userWhoInvited);
+    let channel = await PrivateChannel.findOne({
+      firebaseId: channelFirebaseId,
+    });
+
+    res
+      .status(200)
+      .json({
+        channelName: channel.name,
+        userName: user.username,
+        membersLength: channel.members.length,
+      });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/user/channel/private/joinprivatechannel", async (req, res) => {
+  const { userEmail, channelFirebaseId, inviteId } = req.body;
+  console.log("invite", inviteId);
+  try {
+    let mesage;
+    let user = await User.findOne({ email: userEmail });
+    let channel = await PrivateChannel.findOne({
+      firebaseId: channelFirebaseId,
+    });
+    if (user.privateChannels.includes(channel.id)) {
+      message = "You already joined this channel";
+      await Invite.findByIdAndDelete(inviteId);
+    } else {
+      await User.updateOne(
+        { email: userEmail },
+        { $push: { privateChannels: [channel.id] } }
+      );
+      await Invite.findByIdAndDelete(inviteId);
+      message = "Success";
+    }
+
+    res.status(200).json({ message: message });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.post('/user/invite/deleteone', async (req, res) => {
+  const {inviteId} = req.body;
+  try {
+    await Invite.findByIdAndDelete(inviteId)
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message })
+  }
+});
+
+router.post('/user/inbox/sethasunreadfalse', async (req, res) => {
   const {userEmail} = req.body;
   try {
-    let user = await User.findOne({email: userEmail});
-    let inboxId = user.inbox;
-    let inbox = await Inbox.findById(inboxId).sort([['createdAt','descending']]).populate('invites');
-
-    res.status(200).json({invites: inbox.invites, hasUnread: inbox.hasUnread})
-
+    let user = await User.findOne({ email: userEmail});
+    let inbox = await Inbox.findByIdAndUpdate(user.inbox, {hasUnread: false});
+    res.status(200).json({message: 'OK'})
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({message: error.message})
-
-  }
-});
-
-router.post('/user/invites/getinfo', async (req, res) => {
-  const {userWhoInvited, channelFirebaseId} = req.body;
-
-  try {
-    
-    let user = await User.findById(userWhoInvited);
-    let channel = await PrivateChannel.findOne({firebaseId: channelFirebaseId});
-
-    res.status(200).json({channelName: channel.name, userName: user.username, membersLength: channel.members.length})
-
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message })
   }
 });
 
 
-router.post('/user/channel/private/joinprivatechannel', async (req, res) => {
-
-
-    
-})
 
 
 module.exports = router;
