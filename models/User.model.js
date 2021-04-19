@@ -17,7 +17,6 @@ const userSchema = new Schema(
     },
     password: { type: String},
     settings : {type: Schema.Types.ObjectId, ref: "Settings"},
-    confirmationCode: {type: String, unique:true},
     status: {
       type:String,
       enum:['Pending', 'Active'],
