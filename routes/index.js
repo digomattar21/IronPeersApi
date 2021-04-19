@@ -250,7 +250,6 @@ router.get(
   }
 );
 
-
 router.get("/channels/getchannelmemberslength/:channelId", async (req, res) => {
   const { channelId } = req.params;
 
@@ -320,14 +319,14 @@ router.post("/user/getuserchannels", async (req, res) => {
     let user = await User.findOne({ email: userEmail }).populate(
       "joinedChannels favoriteChannels privateChannels inbox"
     );
-    res
-      .status(200)
-      .json({
+    if (user) {
+      res.status(200).json({
         favoriteChannels: user.favoriteChannels,
         joinedChannels: user.joinedChannels,
         privateChannels: user.privateChannels,
-        hasUnread: user.inbox.hasUnread
+        hasUnread: user.inbox.hasUnread,
       });
+    }
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
@@ -412,7 +411,6 @@ router.post("/user/inbox/getinfo", async (req, res) => {
   }
 });
 
-
 router.post("/user/invites/getinfo", async (req, res) => {
   const { userWhoInvited, channelFirebaseId } = req.body;
 
@@ -422,13 +420,11 @@ router.post("/user/invites/getinfo", async (req, res) => {
       firebaseId: channelFirebaseId,
     });
 
-    res
-      .status(200)
-      .json({
-        channelName: channel.name,
-        userName: user.username,
-        membersLength: channel.members.length,
-      });
+    res.status(200).json({
+      channelName: channel.name,
+      userName: user.username,
+      membersLength: channel.members.length,
+    });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
@@ -463,30 +459,26 @@ router.post("/user/channel/private/joinprivatechannel", async (req, res) => {
   }
 });
 
-
-router.post('/user/invite/deleteone', async (req, res) => {
-  const {inviteId} = req.body;
+router.post("/user/invite/deleteone", async (req, res) => {
+  const { inviteId } = req.body;
   try {
-    await Invite.findByIdAndDelete(inviteId)
+    await Invite.findByIdAndDelete(inviteId);
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
 });
 
-router.post('/user/inbox/sethasunreadfalse', async (req, res) => {
-  const {userEmail} = req.body;
+router.post("/user/inbox/sethasunreadfalse", async (req, res) => {
+  const { userEmail } = req.body;
   try {
-    let user = await User.findOne({ email: userEmail});
-    let inbox = await Inbox.findByIdAndUpdate(user.inbox, {hasUnread: false});
-    res.status(200).json({message: 'OK'})
+    let user = await User.findOne({ email: userEmail });
+    let inbox = await Inbox.findByIdAndUpdate(user.inbox, { hasUnread: false });
+    res.status(200).json({ message: "OK" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
 });
-
-
-
 
 module.exports = router;

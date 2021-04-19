@@ -22,20 +22,14 @@ const auth = require('./routes/auth.routes');
 
 //Rotas
 
-app.use('/', auth)
+app.use('/auth', auth)
 //Rotas publicas
-
 
 //Middleware validacao de token jwt
 // app.use(require('./middlewares/authmiddleware'));
 
 //Rotas privadas
-app.use('/', index);
-
-app.use((req, res, next) => {
-  // If no routes match, send them the React HTML.
-  res.sendFile(__dirname + "/public/index.html");
-});
+app.use('/private', index);
 
 app.listen(PORT||5000, () => {
   console.log(`Server listening on the port: ${PORT}`);
