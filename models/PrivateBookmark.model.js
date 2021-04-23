@@ -9,7 +9,8 @@ const PrivateBookmarkSchema = new Schema(
     channelFireBaseId:{type: String},
     messageOwner: {type:String},
     channelName:{type:String},
-    isPrivate:{type: Boolean}
+    isPrivate:{type: Boolean},
+    fileURL : {type:String}
   },
   {
     timestamps: true,
