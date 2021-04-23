@@ -118,7 +118,7 @@ router.post("/user/adduserbookmark", async (req, res) => {
     message,
     messageOwner,
     channelName,
-    imgURL
+    fileURL,
   } = req.body;
   try {
     let channel = await Channel.findOne({ firebaseId: channelId });
@@ -129,8 +129,7 @@ router.post("/user/adduserbookmark", async (req, res) => {
       messageOwner: messageOwner,
       channelName: channelName,
       isPrivate: false,
-      fileURL: imgURL
-
+      fileURL: fileURL ? fileURL : "",
     });
     let updateUserBookmark = await User.updateOne(
       { email: email },
@@ -152,11 +151,10 @@ router.post("/user/adduserprivatebookmark", async (req, res) => {
     message,
     messageOwner,
     channelName,
-    imgURL
+    fileURL,
   } = req.body;
   try {
     let channel = await PrivateChannel.findOne({ firebaseId: channelId });
-
     let newBookmark = await PrivateBookmark.create({
       channelMongoId: channel.id,
       messageFirebaseId: messageFirebaseId,
@@ -164,7 +162,7 @@ router.post("/user/adduserprivatebookmark", async (req, res) => {
       messageOwner: messageOwner,
       channelName: channelName,
       isPrivate: true,
-      fileURL: imgURL
+      fileURL: fileURL ? fileURL : "",
     });
     let updateUserBookmark = await User.updateOne(
       { email: email },
@@ -486,33 +484,29 @@ router.post("/user/inbox/sethasunreadfalse", async (req, res) => {
   }
 });
 
-router.post('/user/removebookmarkedmessage', async (req, res) => {
-  const {isPrivate, userEmail, messageFirebaseId, bookmarkMongoId} = req.body;
+router.post("/user/removebookmarkedmessage", async (req, res) => {
+  const { isPrivate, userEmail, messageFirebaseId, bookmarkMongoId } = req.body;
   try {
-    let user = await User.findOne({ email:userEmail})
-    console.log(user)
-    if(isPrivate){
+    let user = await User.findOne({ email: userEmail });
+    if (isPrivate) {
       await PrivateBookmark.findByIdAndDelete(bookmarkMongoId);
-      
-      
-    }else {
+      let updateUserBookmark = await User.updateOne(
+        { email: userEmail },
+        { $pull: { myPrivateBookmarks: [bookmarkMongoId] } }
+      );
+    } else {
       await Bookmark.findByIdAndDelete(bookmarkMongoId);
       await User.updateOne(
-        {email: userEmail},
-        {$pull:{myBookmarks:{$in:[bookmarkMongoId]}}}
-      )
-      
-      let user1 = await User.findOne({ email:userEmail});
-      console.log(user1.myBookmarks)
-      
+        { email: userEmail },
+        { $pull: { myBookmarks: [bookmarkMongoId] } }
+      );
     }
 
-    res.status(200).json({ message:'OK'})
-    
+    res.status(200).json({ message: "OK" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message:error.message });
+    res.status(500).json({ message: error.message });
   }
-})
+});
 
 module.exports = router;
