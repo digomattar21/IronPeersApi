@@ -238,12 +238,19 @@ router.get("/channels/getpinnedmessages/:channelId", async (req, res) => {
   }
 });
 
-router.get(
-  "/channels/private/getpinnedmessages/:channelId",
+router.post(
+  "/channels/private/getpinnedmessages",
   async (req, res) => {
-    const { channelId } = req.params;
+    const { channelId, isPrivate } = req.body;
     try {
-      let channel = await PrivateChannel.findOne({ firebaseId: channelId });
+      let channel;
+      console.log(isPrivate)
+      if (isPrivate){
+        channel = await PrivateChannel.findOne({ firebaseId: channelId });
+      }else{
+        channel = await Channel.findOne({ firebaseId: channelId})
+      }
+      console.log(channel)
       let pinnedMessages = channel.pinnedMessages;
       res.status(200).json({ messageFirebaseIds: pinnedMessages });
     } catch (error) {
@@ -508,5 +515,43 @@ router.post("/user/removebookmarkedmessage", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.post('/channel/getmembers', async (req, res) => {
+  let {isPrivate, channelId} = req.body;
+  try {
+    let members;
+    if (isPrivate){
+      let channel = await PrivateChannel.findOne({firebaseId: channelId});
+      members = channel.members;
+    }else{
+      let channel = await Channel.findOne({firebaseId: channelId});
+      members = channel.members;
+    }
+
+    res.status(200).json({members: members})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message })
+  }
+});
+
+router.post('/channel/getmembersinfo', async (req, res) => {
+  let {members} = req.body;
+  try {
+    let membersInfo = [];
+    for (let i=0; i<members.length;i++){
+      let user = await User.findById(members[i]);
+      let {username, profilePic} = user;
+      membersInfo.push({"username":username, "profilePic":profilePic})
+    }
+
+    res.status(200).json({info: membersInfo})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message})
+  }
+})
 
 module.exports = router;
