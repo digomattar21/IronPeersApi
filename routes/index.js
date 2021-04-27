@@ -238,27 +238,24 @@ router.get("/channels/getpinnedmessages/:channelId", async (req, res) => {
   }
 });
 
-router.post(
-  "/channels/private/getpinnedmessages",
-  async (req, res) => {
-    const { channelId, isPrivate } = req.body;
-    try {
-      let channel;
-      console.log(isPrivate)
-      if (isPrivate){
-        channel = await PrivateChannel.findOne({ firebaseId: channelId });
-      }else{
-        channel = await Channel.findOne({ firebaseId: channelId})
-      }
-      console.log(channel)
-      let pinnedMessages = channel.pinnedMessages;
-      res.status(200).json({ messageFirebaseIds: pinnedMessages });
-    } catch (error) {
-      console.log(error.message);
-      res.status(500).json({ message: error.message });
+router.post("/channels/private/getpinnedmessages", async (req, res) => {
+  const { channelId, isPrivate } = req.body;
+  try {
+    let channel;
+    console.log(isPrivate);
+    if (isPrivate) {
+      channel = await PrivateChannel.findOne({ firebaseId: channelId });
+    } else {
+      channel = await Channel.findOne({ firebaseId: channelId });
     }
+    console.log(channel);
+    let pinnedMessages = channel.pinnedMessages;
+    res.status(200).json({ messageFirebaseIds: pinnedMessages });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
   }
-);
+});
 
 router.get("/channels/getchannelmemberslength/:channelId", async (req, res) => {
   const { channelId } = req.params;
@@ -335,6 +332,7 @@ router.post("/user/getuserchannels", async (req, res) => {
         joinedChannels: user.joinedChannels,
         privateChannels: user.privateChannels,
         hasUnread: user.inbox.hasUnread,
+        userDms: user.dms
       });
     }
   } catch (error) {
@@ -516,41 +514,147 @@ router.post("/user/removebookmarkedmessage", async (req, res) => {
   }
 });
 
-router.post('/channel/getmembers', async (req, res) => {
-  let {isPrivate, channelId} = req.body;
+router.post("/channel/getmembers", async (req, res) => {
+  let { isPrivate, channelId } = req.body;
   try {
     let members;
-    if (isPrivate){
-      let channel = await PrivateChannel.findOne({firebaseId: channelId});
+    if (isPrivate) {
+      let channel = await PrivateChannel.findOne({ firebaseId: channelId });
       members = channel.members;
-    }else{
-      let channel = await Channel.findOne({firebaseId: channelId});
+    } else {
+      let channel = await Channel.findOne({ firebaseId: channelId });
       members = channel.members;
     }
 
-    res.status(200).json({members: members})
-
+    res.status(200).json({ members: members });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
 });
 
-router.post('/channel/getmembersinfo', async (req, res) => {
-  let {members} = req.body;
+router.post("/channel/getmembersinfo", async (req, res) => {
+  let { members } = req.body;
   try {
     let membersInfo = [];
-    for (let i=0; i<members.length;i++){
+    for (let i = 0; i < members.length; i++) {
       let user = await User.findById(members[i]);
-      let {username, profilePic} = user;
-      membersInfo.push({"username":username, "profilePic":profilePic})
+      let { username, profilePic } = user;
+      membersInfo.push({ username: username, profilePic: profilePic });
     }
 
-    res.status(200).json({info: membersInfo})
+    res.status(200).json({ info: membersInfo });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/directmessage/searchforuser", async (req, res) => {
+  let { query } = req.body;
+  let userQueryResults;
+  try {
+    console.log(query);
+
+    query.includes("@")
+      ? await User.aggregate(
+          [
+            {
+              $match: {
+                email: { $regex: query, $options: "i" },
+              },
+            },
+            { $unwind: "$email" },
+            {
+              $match: {
+                email: { $regex: query, $options: "i" },
+              },
+            },
+            {
+              $group: {
+                _id: "$_id",
+                email: { $push: "$email" },
+                profilePic: { $first: "$profilePic" },
+              },
+            },
+          ],
+          function (err, results) {
+            if (err) {
+              throw err;
+            } else {
+              console.log(results);
+              res.status(200).json({ results: results });
+            }
+          }
+        )
+      : await User.aggregate(
+          [
+            {
+              $match: {
+                username: { $regex: query, $options: "i" },
+              },
+            },
+            { $unwind: "$username" },
+            {
+              $match: {
+                username: { $regex: query, $options: "i" },
+              },
+            },
+            {
+              $group: {
+                _id: "$_id",
+                username: { $push: "$username" },
+                profilePic: { $first: "$profilePic" },
+              },
+            },
+          ],
+          function (err, results) {
+            if (err) {
+              throw err;
+            } else {
+              console.log(results);
+              res.status(200).json({ results: results });
+            }
+          }
+        );
 
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: error.message})
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.post('/directmessage/createnew', async (req, res) => {
+  let {userWhoInvitedEmail, userReceivingUsername, dmId, dmName} = req.body;
+  try {    
+    let updatedUserSending = await User.updateOne(
+      { email: userWhoInvitedEmail },
+      { $push: { dms: [dmId] } }
+    );
+
+    let updatedUserReceiving = await User.updateOne(
+      { username: userReceivingUsername },
+      { $push: { dms: [dmId] } }
+    );
+
+    res.status(200).json({message: 'OK'})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/user/getdms', async (req, res) => {
+  let {userEmail} = req.body;
+  try {
+    let user = await User.findOne({ email: userEmail});
+    res.status(200).json({dms: user.dms})
+    
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
   }
 })
 

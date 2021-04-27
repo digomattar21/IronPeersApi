@@ -5,12 +5,13 @@ const userSchema = new Schema(
   {
     username: {
       type: String,
+      unique: true,
+      trim: true,
       required: [true, `Insira seu nome de usuário`],
     },
     email: {
       type: String,
       unique: true,
-      trim: true,
       required: [true, `Insira um email`],
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Por favor insira um email válido"],
@@ -28,7 +29,8 @@ const userSchema = new Schema(
     favoriteChannels: [{type: Schema.Types.ObjectId, ref:'Channel'}],
     privateChannels: [{type: Schema.Types.ObjectId, ref:"PrivateChannel"}],
     myPrivateBookmarks: [{type: Schema.Types.ObjectId,ref:"PrivateBookmark"}],
-    inbox: {type: Schema.Types.ObjectId, ref:'Inbox'}
+    inbox: {type: Schema.Types.ObjectId, ref:'Inbox'},
+    dms:[{type: String, unique:true}]
 
   },
   {
