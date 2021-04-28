@@ -409,7 +409,9 @@ router.post("/user/inbox/getinfo", async (req, res) => {
     let inbox = await Inbox.findById(inboxId)
       .sort([["createdAt", "descending"]])
       .populate("invites");
-
+    if (inbox.invites.length<=0){
+      await Inbox.findByIdAndUpdate(inbox.id, {$set: {hasUnread: false}})
+    }
     res
       .status(200)
       .json({ invites: inbox.invites, hasUnread: inbox.hasUnread });
@@ -420,19 +422,28 @@ router.post("/user/inbox/getinfo", async (req, res) => {
 });
 
 router.post("/user/invites/getinfo", async (req, res) => {
-  const { userWhoInvited, channelFirebaseId } = req.body;
+  const { userWhoInvited, channelFirebaseId, dmId } = req.body;
 
   try {
     let user = await User.findById(userWhoInvited);
-    let channel = await PrivateChannel.findOne({
-      firebaseId: channelFirebaseId,
-    });
+    if (dmId){
+      res.status(200).json({
+        userName: user.username,
+        dmId: dmId
+      });
+     
+    }else{
+      let channel = await PrivateChannel.findOne({
+        firebaseId: channelFirebaseId,
+      });
+      res.status(200).json({
+        channelName: channel.name,
+        userName: user.username,
+        membersLength: channel.members.length,
+        
+      });
+    }
 
-    res.status(200).json({
-      channelName: channel.name,
-      userName: user.username,
-      membersLength: channel.members.length,
-    });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
@@ -626,18 +637,28 @@ router.post("/directmessage/searchforuser", async (req, res) => {
 
 
 router.post('/directmessage/createnew', async (req, res) => {
-  let {userWhoInvitedEmail, userReceivingUsername, dmId, dmName} = req.body;
-  try {    
+  const {userEmail, otherUsername, dmId, inviteId} = req.body;
+
+  try { 
     let updatedUserSending = await User.updateOne(
-      { email: userWhoInvitedEmail },
-      { $push: { dms: [dmId] } }
+      { email: userEmail },
+      { $push: { dms: [dmId] }}
     );
 
+    console.log(updatedUserSending)
+    let deletedInvite = await Invite.findByIdAndDelete(inviteId);
+
+    let userR = await User.findOne({username: otherUsername}).populate('inbox');
+
+    if (userR.inbox.invites.length<=0){
+      await Inbox.findByIdAndUpdate(userR.inbox.id, {$set:{hasUnread: false}})
+    }
+    
     let updatedUserReceiving = await User.updateOne(
-      { username: userReceivingUsername },
-      { $push: { dms: [dmId] } }
+      { username: otherUsername },
+      { $push: { dms: [dmId] }}
     );
-
+    
     res.status(200).json({message: 'OK'})
 
   } catch (error) {
@@ -645,6 +666,35 @@ router.post('/directmessage/createnew', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.post('/directmessage/senddmrequest', async (req, res)=>{
+  const {userWhoInvitedEmail, userReceivingUsername, dmId} = req.body;
+  try {
+    
+    let userWhoInvited = await User.findOne({ email: userWhoInvitedEmail });
+    let userReceiving = await User.findOne({ username: userReceivingUsername });
+    let userInvitedInboxId = userReceiving.inbox;
+
+    let newInvite = await Invite.create({
+      userWhoInvited: userWhoInvited.id,
+      userInvited: userReceiving.id,
+      dmId: dmId,
+      read: false,
+
+    });
+
+    let userWhoInvitedUpdated = await Inbox.findByIdAndUpdate(userInvitedInboxId, {
+      hasUnread: true,
+      $push: { invites: [newInvite.id] },
+    });
+
+    res.status(200).json({message: 'Invite sent sucessfully'})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message})
+  }
+})
 
 router.post('/user/getdms', async (req, res) => {
   let {userEmail} = req.body;
@@ -656,6 +706,6 @@ router.post('/user/getdms', async (req, res) => {
     console.log(error.message);
     res.status(500).json({ message: error.message });
   }
-})
+});
 
 module.exports = router;
