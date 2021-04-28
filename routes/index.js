@@ -708,4 +708,30 @@ router.post('/user/getdms', async (req, res) => {
   }
 });
 
+router.post('/channel/checkdeletemessage', async (req, res) => {
+  let {channelFirebaseId, messageFirebaseId, Private} = req.body;
+  try {
+
+   if (Private){
+     channel = await PrivateChannel.findOne({ firebaseId: channelFirebaseId });
+     if (channel.pinnedMessages.includes(messageFirebaseId)){
+       await PrivateChannel.updateOne({ firebaseId: channelFirebaseId}, {$pull:{pinnedMessages:[messageFirebaseId]}})
+     }
+   }else {
+    channel = await Channel.findOne({ firebaseId: channelFirebaseId });
+    if (channel.pinnedMessages.includes(messageFirebaseId)){
+      await Channel.updateOne({ firebaseId: channelFirebaseId}, {$pull:{pinnedMessages:[messageFirebaseId]}})
+    }
+   }
+
+   console.log(channel);
+
+   res.status(200).json({message: 'OK'})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+})
+
 module.exports = router;
