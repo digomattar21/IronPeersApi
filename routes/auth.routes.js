@@ -8,6 +8,8 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User.model");
 const Inbox = require("../models/Inbox.model");
+const Profile = require("../models/Profile.model");
+const Settings = require("../models/Settings.model");
 const saltRounds = 12;
 
 authRouter.post("/signup/google", async (req, res) => {
@@ -28,11 +30,17 @@ authRouter.post("/signup/google", async (req, res) => {
         id: newUser.id,
       };
       let inbox = await Inbox.create({ user: newUser.id });
-      console.log(inbox);
-      let userUpdated = await User.updateOne(
-        { email: email },
-        { $set: { inbox: inbox.id } }
-      );
+      let profile = await Profile.create({
+        user: newUser.id,
+        email: newUser.email,
+      });
+      let settings = await Settings.create({
+        user: newUser.id,
+        darkmode: false,
+      });
+      await User.updateOne({ email: email }, { $set: { inbox: inbox.id } });
+      await User.updateOne({ email: email }, { $set: { profile: profile.id } });
+      await User.updateOne({ email: email },{ $set: { settings: settings.id } });
     } else {
       payload = {
         username: user.username,
@@ -68,10 +76,15 @@ authRouter.post("/signup/email", async (req, res) => {
       id: newUser.id,
     };
     let inbox = await Inbox.create({ user: newUser.id });
-    let userUpdated = await User.updateOne(
-      { email: email },
-      { $set: { inbox: inbox.id } }
-    );
+    let profile = await Profile.create({
+      user: newUser.id,
+      email: newUser.email,
+    });
+    let settings = await Settings.create({ user: newUser.id, darkmode: false });
+    await User.updateOne({ email: email }, { $set: { inbox: inbox.id } });
+    await User.updateOne({ email: email }, { $set: { profile: profile.id } });
+    await User.updateOne({ email: email }, { $set: { settings: settings.id } });
+
     const token = jwt.sign(payload, process.env.JWT_PASS, {
       expiresIn: "1 day",
     });

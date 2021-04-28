@@ -9,6 +9,7 @@ const PrivateChannel = require("../models/PrivateChannel.model");
 const PrivateBookmark = require("../models/PrivateBookmark.model");
 const Invite = require("../models/Invite.model");
 const Inbox = require("../models/Inbox.model");
+const Profile = require("../models/Profile.model");
 const { resolveHostname } = require("nodemailer/lib/shared");
 
 router.post("/channels/createglobal", async (req, res) => {
@@ -242,13 +243,11 @@ router.post("/channels/private/getpinnedmessages", async (req, res) => {
   const { channelId, isPrivate } = req.body;
   try {
     let channel;
-    console.log(isPrivate);
     if (isPrivate) {
       channel = await PrivateChannel.findOne({ firebaseId: channelId });
     } else {
       channel = await Channel.findOne({ firebaseId: channelId });
     }
-    console.log(channel);
     let pinnedMessages = channel.pinnedMessages;
     res.status(200).json({ messageFirebaseIds: pinnedMessages });
   } catch (error) {
@@ -452,7 +451,6 @@ router.post("/user/invites/getinfo", async (req, res) => {
 
 router.post("/user/channel/private/joinprivatechannel", async (req, res) => {
   const { userEmail, channelFirebaseId, inviteId } = req.body;
-  console.log("invite", inviteId);
   try {
     let mesage;
     let user = await User.findOne({ email: userEmail });
@@ -550,8 +548,8 @@ router.post("/channel/getmembersinfo", async (req, res) => {
     let membersInfo = [];
     for (let i = 0; i < members.length; i++) {
       let user = await User.findById(members[i]);
-      let { username, profilePic } = user;
-      membersInfo.push({ username: username, profilePic: profilePic });
+      let { username, profilePic, email } = user;
+      membersInfo.push({ username: username, profilePic: profilePic, email: email });
     }
 
     res.status(200).json({ info: membersInfo });
@@ -565,7 +563,6 @@ router.post("/directmessage/searchforuser", async (req, res) => {
   let { query } = req.body;
   let userQueryResults;
   try {
-    console.log(query);
 
     query.includes("@")
       ? await User.aggregate(
@@ -593,7 +590,7 @@ router.post("/directmessage/searchforuser", async (req, res) => {
             if (err) {
               throw err;
             } else {
-              console.log(results);
+              
               res.status(200).json({ results: results });
             }
           }
@@ -623,7 +620,7 @@ router.post("/directmessage/searchforuser", async (req, res) => {
             if (err) {
               throw err;
             } else {
-              console.log(results);
+              
               res.status(200).json({ results: results });
             }
           }
@@ -645,7 +642,6 @@ router.post('/directmessage/createnew', async (req, res) => {
       { $push: { dms: [dmId] }}
     );
 
-    console.log(updatedUserSending)
     let deletedInvite = await Invite.findByIdAndDelete(inviteId);
 
     let userR = await User.findOne({username: otherUsername}).populate('inbox');
@@ -711,23 +707,86 @@ router.post('/user/getdms', async (req, res) => {
 router.post('/channel/checkdeletemessage', async (req, res) => {
   let {channelFirebaseId, messageFirebaseId, Private} = req.body;
   try {
-
    if (Private){
-     channel = await PrivateChannel.findOne({ firebaseId: channelFirebaseId });
+     let channel = await PrivateChannel.findOne({ firebaseId: channelFirebaseId });
      if (channel.pinnedMessages.includes(messageFirebaseId)){
-       await PrivateChannel.updateOne({ firebaseId: channelFirebaseId}, {$pull:{pinnedMessages:[messageFirebaseId]}})
+       await PrivateChannel.updateOne({ firebaseId: channelFirebaseId}, {$pull:{pinnedMessages:messageFirebaseId}})
      }
    }else {
-    channel = await Channel.findOne({ firebaseId: channelFirebaseId });
-    if (channel.pinnedMessages.includes(messageFirebaseId)){
-      await Channel.updateOne({ firebaseId: channelFirebaseId}, {$pull:{pinnedMessages:[messageFirebaseId]}})
+    let channell = await Channel.findOne({ firebaseId: channelFirebaseId });
+    if (channell.pinnedMessages.includes(messageFirebaseId)){
+      await Channel.updateOne({ firebaseId: channelFirebaseId}, {$pull:{pinnedMessages:messageFirebaseId}})
     }
    }
 
-   console.log(channel);
 
    res.status(200).json({message: 'OK'})
 
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.post('/user/getprofile', async (req, res)=>{
+  let {userId} = req.body;
+
+  try {
+    let user = await User.findOne({ email: userId}).populate('profile');
+
+    res.status(200).json({'profile': user.profile, profilePic: user.profilePic, username: user.username})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/user/profile/addnewability', async (req, res)=>{
+  let {userEmail, ability} = req.body;
+  try {
+    let habRegex = /^[a-z0-9]/;
+    if (!habRegex.test(ability)){
+      throw Error(`Only letters and numbers are allowed`)
+    }
+
+
+    let user = await User.findOne({ email: userEmail});
+    await Profile.findByIdAndUpdate(user.profile, 
+      {
+        $push:{abilities:[ability]}
+      });
+
+      res.status(200).json({message: "OK"})
+
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.post('/user/profile/deleteability', async (req, res)=>{
+  let {userEmail, ability} = req.body;
+  try {
+    let user = await User.findOne({ email: userEmail});
+    await Profile.findByIdAndUpdate(user.profile, {
+      $pull:{abilities: ability}
+    })
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/user/getemail', async (req, res)=>{
+  let {username} = req.body;
+  try {
+    let user = await User.findOne({username: username});
+    res.status(200).json({email: user.email})
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: error.message });
