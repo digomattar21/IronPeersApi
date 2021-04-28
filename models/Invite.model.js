@@ -7,8 +7,8 @@ const inviteSchema = new Schema(
     userInvited: {type: Schema.Types.ObjectId, ref:'User'},
     channelMongoId: {type: Schema.Types.ObjectId, ref:'PrivateChannel'},
     channelFirebaseId:{type:String},
-    read: {type: Boolean}
-    
+    read: {type: Boolean},
+    dmId: {type: String}
 },
   {
     timestamps: true,

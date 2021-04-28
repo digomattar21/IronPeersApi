@@ -30,8 +30,7 @@ const userSchema = new Schema(
     privateChannels: [{type: Schema.Types.ObjectId, ref:"PrivateChannel"}],
     myPrivateBookmarks: [{type: Schema.Types.ObjectId,ref:"PrivateBookmark"}],
     inbox: {type: Schema.Types.ObjectId, ref:'Inbox'},
-    dms:[{type: String, unique:true}]
-
+    dms:[{type: String}]
   },
   {
     timestamps: true,
