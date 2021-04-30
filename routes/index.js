@@ -463,6 +463,9 @@ router.post("/user/channel/private/joinprivatechannel", async (req, res) => {
         { $push: { privateChannels: [channel.id] } }
       );
       await Invite.findByIdAndDelete(inviteId);
+      await PrivateChannel.updateOne({firebaseId: channelFirebaseId},{
+        $push:{members: [user.id]}
+      })
       message = "Success";
     }
 
@@ -849,5 +852,19 @@ router.post("/mainsearch", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.post('/user/setnewgiturl', async (req, res) => {
+  let {userEmail, url} = req.body;
+  try {
+    let user = await User.findOne({email: userEmail})
+    await Profile.findByIdAndUpdate(user.profile, {
+      $set: {githubUrl: url}
+    })
+    res.status(200).json({'message': "OK"})
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
+  }
+})
 
 module.exports = router;

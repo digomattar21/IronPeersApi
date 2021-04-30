@@ -61,13 +61,11 @@ authRouter.post("/signup/google", async (req, res) => {
 
 authRouter.post("/signup/email", async (req, res) => {
   const { username, email, profilePic } = req.body;
-  console.log(username, email, profilePic);
-
   try {
     let newUser = await User.create({
       username: username,
       email: email,
-      profilePic: profilePic,
+      profilePic: "https://picsum.photos/100",
       status: "Active",
     });
     let payload = {
