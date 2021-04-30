@@ -9,7 +9,8 @@ const profileSchema = new Schema(
     ironhackClass: {type:String},
     abilities: [{type: String}],
     email: {type: String},
-    profilePicture: {type:String}
+    profilePicture: {type:String},
+    githubUrl: {type: String}
 },
   {
     timestamps: true,
