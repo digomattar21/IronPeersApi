@@ -1,8 +1,8 @@
-require('dotenv').config()
-const mongoose = require("mongoose");
+require('dotenv').config();
+const mongoose = require('mongoose');
 const uri =
   process.env.MONGODB_URI ||
-  `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.iutfv.mongodb.net/ironpeers_v1?retryWrites=true&w=majority`;
+  `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.9xi6kms.mongodb.net/?retryWrites=true&w=majority`;
 
 //Connecting to DB
 mongoose
@@ -13,5 +13,5 @@ mongoose
     );
   })
   .catch((err) => {
-    console.error("Error connecting to mongo", err);
+    console.error('Error connecting to mongo', err);
   });
