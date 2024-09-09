@@ -1,8 +1,9 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
+const encodedPassword = encodeURIComponent(process.env.MONGODB_PASS);
 const uri =
   process.env.MONGODB_URI ||
-  `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.9xi6kms.mongodb.net/?retryWrites=true&w=majority`;
+  `mongodb+srv://${process.env.MONGODB_USER}:${encodedPassword}@${process.env.MONGODB_CLUSTER}`;
 
 //Connecting to DB
 mongoose
