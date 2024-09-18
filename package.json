@@ -6,12 +6,14 @@
   "scripts": {
     "lint": "eslint '**/*.js'",
     "start": "node ./app.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": ""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
+    "backend": "file:",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "cloudinary": "^1.25.1",
